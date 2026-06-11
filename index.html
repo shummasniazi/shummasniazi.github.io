@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Shummas Khan Niazi — Mobile & Fintech Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0F14;
+  --surface:#141B23;
+  --surface2:#1B242F;
+  --line:#27323F;
+  --chip:#D9A441;          /* EMV chip gold */
+  --chip-soft:rgba(217,164,65,.14);
+  --paper:#F7F4EC;
+  --approve:#2FBF71;
+  --decline:#E5604C;
+  --txt:#E8EDF2;
+  --muted:#8A97A5;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--body);background:#06090D;color:var(--txt);
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 60% at 70% 20%,rgba(217,164,65,.05),transparent),
+                   radial-gradient(ellipse 60% 50% at 20% 80%,rgba(47,191,113,.04),transparent);
+}
+/* ---------- desktop stage around the phone ---------- */
+.stage{display:flex;align-items:center;gap:64px;padding:32px}
+.stage-side{max-width:300px}
+.stage-side .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--chip);text-transform:uppercase}
+.stage-side h1{font-family:var(--disp);font-size:34px;line-height:1.1;margin:10px 0 14px;font-weight:700}
+.stage-side p{color:var(--muted);font-size:14px;line-height:1.65}
+.stage-side .hint{margin-top:26px;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}
+.stage-side .hint .dot{width:8px;height:8px;border-radius:50%;background:var(--approve);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ---------- phone frame ---------- */
+.phone{
+  width:392px;height:812px;background:#0d1117;border-radius:48px;
+  border:1px solid #2a333d;box-shadow:0 0 0 10px #161b22,0 0 0 11px #2a333d,0 40px 90px rgba(0,0,0,.6);
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.screen{position:absolute;inset:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+/* status bar */
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-family:var(--mono);font-size:12px;color:var(--muted);flex-shrink:0;position:relative}
+.notch{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:110px;height:26px;background:#06090D;border-radius:14px;border:1px solid #1c242d}
+.sb-right{display:flex;gap:6px;align-items:center}
+.sig{display:inline-flex;gap:1.5px;align-items:flex-end}.sig i{width:3px;background:var(--muted);border-radius:1px;display:block}
+.batt{width:20px;height:10px;border:1px solid var(--muted);border-radius:3px;position:relative}
+.batt::after{content:'';position:absolute;inset:1.5px;right:5px;background:var(--approve);border-radius:1px}
+
+/* app body & screens */
+.app{flex:1;overflow:hidden;position:relative}
+.scr{position:absolute;inset:0;overflow-y:auto;padding:20px 22px 96px;display:none;scrollbar-width:none}
+.scr::-webkit-scrollbar{display:none}
+.scr.active{display:block;animation:scrIn .28s ease}
+@keyframes scrIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.scr.active,.receipt.show,.toastmsg{animation:none!important}.dot{animation:none!important}}
+
+/* bottom nav */
+.nav{position:absolute;bottom:0;left:0;right:0;height:76px;background:rgba(13,17,23,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:stretch;z-index:30}
+.nav button{flex:1;background:none;border:none;color:var(--muted);font-family:var(--body);font-size:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding-bottom:8px}
+.nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button.on{color:var(--chip)}
+.nav .pos-btn{position:relative}
+.nav .pos-btn .ring{position:absolute;top:6px;width:42px;height:42px;border-radius:14px;background:var(--chip-soft);border:1px solid rgba(217,164,65,.35);z-index:-1;opacity:0;transition:opacity .2s}
+.nav .pos-btn.on .ring{opacity:1}
+
+/* shared bits */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--chip)}
+h2.screen-title{font-family:var(--disp);font-size:24px;font-weight:700;margin:6px 0 4px}
+.sub{color:var(--muted);font-size:13px;line-height:1.55}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.mono{font-family:var(--mono)}
+
+/* ---------- HOME ---------- */
+.avatar{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--chip),#9a6f1f);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:24px;color:#0B0F14;margin-bottom:14px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.metric{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.metric .v{font-family:var(--disp);font-size:21px;font-weight:700;color:var(--chip)}
+.metric .l{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
+.cta{display:flex;align-items:center;justify-content:space-between;background:var(--chip);color:#15110a;border:none;border-radius:14px;padding:16px;width:100%;margin-top:16px;font-family:var(--disp);font-weight:600;font-size:15px;cursor:pointer}
+.cta:active{transform:scale(.98)}
+.chipline{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.tag{font-family:var(--mono);font-size:10.5px;color:var(--txt);background:var(--surface2);border:1px solid var(--line);padding:5px 9px;border-radius:8px}
+
+/* ---------- CAREER ---------- */
+.job{border-left:2px solid var(--line);padding:0 0 22px 18px;position:relative;margin-left:6px}
+.job::before{content:'';position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--chip);box-shadow:0 0 0 4px var(--chip-soft)}
+.job.dim::before{background:var(--muted);box-shadow:none}
+.job .when{font-family:var(--mono);font-size:10.5px;color:var(--chip);letter-spacing:.08em}
+.job.dim .when{color:var(--muted)}
+.job h3{font-family:var(--disp);font-size:16px;margin:4px 0 1px}
+.job .co{font-size:12.5px;color:var(--muted)}
+.job ul{margin:10px 0 0;padding-left:16px;color:#C5CEDA;font-size:12.5px;line-height:1.6}
+.job li{margin-bottom:6px}
+.job li::marker{color:var(--chip)}
+
+/* ---------- SKILLS ---------- */
+.skillgroup h4{font-family:var(--disp);font-size:14px;margin:18px 0 4px;color:var(--txt)}
+.bar{height:6px;border-radius:3px;background:var(--surface2);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--chip),#e8c06f);border-radius:3px}
+
+/* ---------- CONTACT ---------- */
+.contact-row{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-top:12px;text-decoration:none;color:var(--txt)}
+.contact-row:active{background:var(--surface2)}
+.contact-row .ic{width:38px;height:38px;border-radius:11px;background:var(--chip-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-row .ic svg{width:18px;height:18px;stroke:var(--chip);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.contact-row .t{font-size:13.5px;font-weight:600}
+.contact-row .s{font-size:11.5px;color:var(--muted);font-family:var(--mono);word-break:break-all}
+
+/* ---------- POS TERMINAL ---------- */
+.pos{position:absolute;inset:0;background:#070B10;display:none;flex-direction:column;padding:14px 18px 90px;overflow:hidden}
+.pos.active{display:flex}
+.pos-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;color:var(--muted);padding:4px 2px 10px;border-bottom:1px dashed var(--line)}
+.pos-head .live{color:var(--approve)}
+.pos-stage{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.pstep{position:absolute;inset:0;display:none;flex-direction:column;padding-top:14px}
+.pstep.on{display:flex;animation:scrIn .25s ease}
+
+.amount-display{font-family:var(--mono);font-size:40px;font-weight:700;text-align:center;padding:18px 0 6px;letter-spacing:.02em}
+.amount-display .cur{font-size:16px;color:var(--muted);margin-right:8px;font-weight:400}
+.amount-hint{text-align:center;font-size:11px;color:var(--muted);font-family:var(--mono)}
+.amount-hint b{color:var(--chip);font-weight:500}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:auto}
+.keypad button{background:var(--surface);border:1px solid var(--line);border-radius:14px;color:var(--txt);font-family:var(--mono);font-size:21px;padding:15px 0;cursor:pointer}
+.keypad button:active{background:var(--surface2);transform:scale(.97)}
+.keypad .k-ok{background:var(--approve);border-color:var(--approve);color:#06251a;font-weight:700;font-size:15px;font-family:var(--disp)}
+.keypad .k-x{color:var(--decline);font-size:15px;font-family:var(--disp)}
+.pos-title{font-family:var(--disp);font-size:17px;font-weight:600;text-align:center}
+.pos-sub{text-align:center;color:var(--muted);font-size:12px;margin-top:4px}
+
+/* dashboard grid */
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.dash button{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 12px;color:var(--txt);font-family:var(--disp);font-size:13.5px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.dash button span{font-family:var(--mono);font-size:9.5px;color:var(--muted);font-weight:400;letter-spacing:.1em}
+.dash button:active{background:var(--surface2)}
+.dash .primary{grid-column:1/-1;background:var(--chip-soft);border-color:rgba(217,164,65,.4)}
+.dash .primary b{color:var(--chip);font-size:16px}
+.dash button:disabled{opacity:.35;cursor:default}
+
+/* card presentation */
+.cardwait{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.nfc-rings{position:relative;width:130px;height:130px;display:flex;align-items:center;justify-content:center;margin-bottom:8px}
+.nfc-rings .r{position:absolute;border:1.5px solid var(--chip);border-radius:50%;opacity:0;animation:ring 2.1s infinite}
+.nfc-rings .r:nth-child(1){width:60px;height:60px;animation-delay:0s}
+.nfc-rings .r:nth-child(2){width:92px;height:92px;animation-delay:.35s}
+.nfc-rings .r:nth-child(3){width:124px;height:124px;animation-delay:.7s}
+@keyframes ring{0%{opacity:0;transform:scale(.8)}30%{opacity:.8}100%{opacity:0;transform:scale(1.08)}}
+.cardicon{width:52px;height:36px;border-radius:6px;background:linear-gradient(135deg,#2b3a4d,#1a2532);border:1px solid #3b4d63;position:relative}
+.cardicon::before{content:'';position:absolute;left:7px;top:9px;width:11px;height:9px;border-radius:2px;background:var(--chip)}
+.present-actions{display:flex;gap:9px;margin-top:auto}
+.present-actions button{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 6px;color:var(--txt);font-family:var(--disp);font-size:12.5px;font-weight:600;cursor:pointer}
+.present-actions button em{display:block;font-style:normal;font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:3px;font-weight:400}
+.present-actions button:active{background:var(--surface2)}
+
+/* pin */
+.pindots{display:flex;gap:14px;justify-content:center;padding:26px 0 8px}
+.pindots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--muted);display:block}
+.pindots i.f{background:var(--chip);border-color:var(--chip)}
+.secure-note{display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+.secure-note svg{width:11px;height:11px;stroke:var(--approve);fill:none;stroke-width:2}
+
+/* processing trace */
+.trace{flex:1;overflow-y:auto;font-family:var(--mono);font-size:10.5px;line-height:1.75;background:#0a0e13;border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:12px;scrollbar-width:none}
+.trace::-webkit-scrollbar{display:none}
+.trace .tl{opacity:0;animation:tlIn .2s forwards}
+@keyframes tlIn{to{opacity:1}}
+.trace .lbl{color:var(--muted)}
+.trace .val{color:var(--txt)}
+.trace .hi{color:var(--chip)}
+.trace .ok{color:var(--approve)}
+.trace .no{color:var(--decline)}
+.spinner{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--chip);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* result + receipt */
+.result-ic{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:18px auto 10px}
+.result-ic.ok{background:rgba(47,191,113,.12);border:1.5px solid var(--approve)}
+.result-ic.no{background:rgba(229,96,76,.12);border:1.5px solid var(--decline)}
+.result-ic svg{width:34px;height:34px;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.result-ic.ok svg{stroke:var(--approve)}.result-ic.no svg{stroke:var(--decline)}
+.rc-code{text-align:center;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.receipt-wrap{flex:1;overflow:hidden;display:flex;justify-content:center;align-items:flex-end;margin-top:10px}
+.receipt{width:248px;background:var(--paper);color:#23211c;font-family:var(--mono);font-size:10px;line-height:1.65;padding:20px 16px 14px;border-radius:0;transform:translateY(105%);box-shadow:0 -8px 30px rgba(0,0,0,.45);
+  -webkit-mask-image:linear-gradient(transparent 9px,#000 9px),radial-gradient(circle at 6px 0,transparent 5px,#000 5.5px);
+  -webkit-mask-size:100% 100%,12px 10px;-webkit-mask-repeat:no-repeat,repeat-x;-webkit-mask-position:0 0,0 0;
+  mask-image:linear-gradient(transparent 9px,#000 9px),radial-gradient(circle at 6px 0,transparent 5px,#000 5.5px);
+  mask-size:100% 100%,12px 10px;mask-repeat:no-repeat,repeat-x;mask-position:0 0,0 0;}
+.receipt.show{animation:printout 1.6s cubic-bezier(.3,.6,.35,1) forwards}
+@keyframes printout{to{transform:translateY(0)}}
+.receipt .c{text-align:center}.receipt .b{font-weight:700}
+.receipt hr{border:none;border-top:1px dashed #999;margin:7px 0}
+.receipt .row{display:flex;justify-content:space-between}
+.receipt .big{font-size:14px;font-weight:700}
+.pos-actions{display:flex;gap:9px;margin-top:12px}
+.pos-actions button{flex:1;border-radius:13px;padding:13px;font-family:var(--disp);font-weight:600;font-size:13px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--txt)}
+.pos-actions .gold{background:var(--chip);border-color:var(--chip);color:#15110a}
+.pos-actions button:active{transform:scale(.98)}
+
+.boot{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.boot .logo{font-family:var(--disp);font-weight:700;font-size:21px;letter-spacing:.04em}
+.boot .logo b{color:var(--chip)}
+.bootlines{font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center;line-height:2}
+
+.toastmsg{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--line);color:var(--txt);font-size:12px;padding:9px 16px;border-radius:20px;white-space:nowrap;animation:toastIn .25s ease;z-index:40}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ---------- terminal mode (phone ⇄ POS device, T1-style) ---------- */
+.phone{transition:border-radius .45s ease,box-shadow .45s ease}
+.phone .printer{position:absolute;bottom:0;left:0;right:0;height:96px;display:none;z-index:50;
+  background:linear-gradient(180deg,#1d242d 0%,#161d25 30%,#0e1318 100%);
+  border-top:1px solid #303a46;border-radius:0 0 46px 46px;
+  box-shadow:inset 0 8px 14px -8px rgba(0,0,0,.8),inset 0 -10px 16px -12px rgba(255,255,255,.06)}
+.phone .printer .slot{position:absolute;left:50%;transform:translateX(-50%);top:18px;width:218px;height:9px;border-radius:5px;background:#03060a;
+  box-shadow:inset 0 3px 6px rgba(0,0,0,.95),0 1px 0 rgba(255,255,255,.06)}
+.phone .printer .tear{position:absolute;left:50%;transform:translateX(-50%);top:30px;width:218px;height:4px;
+  background:repeating-linear-gradient(90deg,#262f3a 0 5px,transparent 5px 10px);border-radius:2px}
+.phone .printer .brand{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;font-family:var(--mono);font-size:9px;color:#56636f;letter-spacing:.22em;white-space:nowrap}
+.phone .printer .led{position:absolute;right:26px;top:18px;width:7px;height:7px;border-radius:50%;background:var(--approve);box-shadow:0 0 7px var(--approve);animation:pulse 2.4s infinite}
+.phone .printer .icc{position:absolute;left:50%;transform:translateX(-50%);bottom:9px;width:128px;height:6px;border-radius:3px;background:#03060a;box-shadow:inset 0 2px 4px rgba(0,0,0,.95),0 1px 0 rgba(255,255,255,.05)}
+.phone .printer .icc::after{content:'INSERT CARD';position:absolute;left:50%;transform:translateX(-50%);top:-1px;font-family:var(--mono);font-size:5px;letter-spacing:.3em;color:#3a4550}
+.phone.terminal{border-radius:34px 34px 50px 50px;box-shadow:0 0 0 11px #161c23,0 0 0 12px #2e3844,0 0 0 15px #10151b,0 0 0 16px #262f3a,0 46px 90px rgba(0,0,0,.7)}
+.phone.terminal .printer{display:block}
+.phone.terminal::after{content:'';position:absolute;top:70px;height:190px;right:0;width:3px;background:#04070a;border-radius:2px;box-shadow:inset 0 0 4px #000;z-index:60}
+.phone.terminal .screen{inset:0 0 96px 0}
+.phone.terminal .statusbar,.phone.terminal .nav{display:none}
+.phone.terminal .pos{padding-bottom:10px}
+.phone.terminal .keypad button{background:linear-gradient(#232d39,#151d26);border-color:#0a0e13;box-shadow:0 3px 0 #05080c,inset 0 1px 0 rgba(255,255,255,.07)}
+.phone.terminal .keypad button:active{transform:translateY(2px);box-shadow:0 1px 0 #05080c}
+.phone.terminal .keypad .k-ok{background:linear-gradient(#36cc7e,#22a45f);color:#04240f;box-shadow:0 3px 0 #0c4a2b,inset 0 1px 0 rgba(255,255,255,.25)}
+.phone.terminal .keypad .k-x{background:linear-gradient(#3a2a27,#241a18);color:#ff8a76;box-shadow:0 3px 0 #120b0a,inset 0 1px 0 rgba(255,255,255,.05)}
+@media (prefers-reduced-motion:reduce){.phone{transition:none}}
+
+/* responsive: on small screens, phone fills viewport */
+@media (max-width:860px){
+  .stage{padding:0;gap:0}
+  .stage-side{display:none}
+  body{background:#0d1117}
+  .phone{width:100vw;height:100vh;height:100dvh;border-radius:0;border:none;box-shadow:none}
+  .phone.terminal{border-radius:0;box-shadow:none}
+}
+@media (min-width:861px) and (max-height:900px){
+  .phone{transform:scale(calc((100vh - 60px)/812));transform-origin:center}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="stage-side">
+    <div class="eyebrow">Portfolio · Payments Engineering</div>
+    <h1>Built like the apps I ship.</h1>
+    <p>I'm Shummas — a mobile &amp; fintech engineer with 8+ years of experience building payment systems and production apps. This portfolio runs as a mobile app, including a working POS terminal that mirrors the real EMV sale flow I build in production.</p>
+    <div class="hint"><span class="dot"></span>The phone is live — tap around. Try a sale.</div>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="printer">
+      <span class="slot"></span>
+      <span class="tear"></span>
+      <span class="led"></span>
+      <span class="brand">NEXTGEN T1 · SMART POS</span>
+      <span class="icc"></span>
+    </div>
+    <div class="screen">
+      <div class="statusbar">
+        <span id="clock">09:41</span>
+        <div class="notch"></div>
+        <div class="sb-right">
+          <span class="sig"><i style="height:4px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:12px"></i></span>
+          <span class="mono" style="font-size:10px">5G</span>
+          <span class="batt"></span>
+        </div>
+      </div>
+
+      <div class="app">
+
+        <!-- ============ HOME ============ -->
+        <section class="scr active" id="scr-home">
+          <div class="avatar">SK</div>
+          <div class="eyebrow">Mobile &amp; Fintech Engineer · 8+ Years</div>
+          <h2 class="screen-title">Shummas Khan Niazi</h2>
+          <p class="sub">8+ years building payment systems that move real money — POS terminals, digital wallets, and the EMV &amp; ISO 8583 plumbing underneath. Currently a core engineer at Keenu, Pakistan's largest POS acquirer. Open to remote roles worldwide (contractor / EOR-ready).</p>
+
+          <div class="metrics">
+            <div class="metric"><div class="v">$1B+</div><div class="l">annual volume on the platform I engineer</div></div>
+            <div class="metric"><div class="v">5M+</div><div class="l">wallet users on the Flutter app I build</div></div>
+            <div class="metric"><div class="v">L3</div><div class="l">EMV certified — Visa ADVT &amp; Mastercard M-TIP</div></div>
+            <div class="metric"><div class="v">150+</div><div class="l">cities running terminals I support live</div></div>
+          </div>
+
+          <button class="cta" onclick="goPOS()">
+            <span>Try the POS terminal demo</span>
+            <span style="font-size:18px">→</span>
+          </button>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Stack</div>
+            <div class="chipline">
+              <span class="tag">Flutter</span><span class="tag">Kotlin</span><span class="tag">EMV L2/L3</span>
+              <span class="tag">ISO 8583</span><span class="tag">DUKPT</span><span class="tag">SoftPOS · NFC</span>
+              <span class="tag">PCI DSS/PTS</span><span class="tag">BLoC</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ CAREER ============ -->
+        <section class="scr" id="scr-career">
+          <div class="eyebrow">Experience</div>
+          <h2 class="screen-title">Career</h2>
+          <div style="height:14px"></div>
+
+          <div class="job">
+            <div class="when">JAN 2024 — PRESENT</div>
+            <h3>Senior Fintech &amp; Mobile Engineer</h3>
+            <div class="co">Keenu — Pakistan's largest POS &amp; EMI platform (acquired by Bazaar, 2025)</div>
+            <ul>
+              <li>Core Flutter engineer on a 5M+ user SBP-regulated wallet — payments, KYC (CNIC OCR + biometrics), bill pay, P2P.</li>
+              <li>Built EMV transaction flows on Sunmi &amp; Topwise terminals: chip, NFC and magstripe, full L2 kernel state machine.</li>
+              <li>Led EMV L3 certification — Visa ADVT &amp; Mastercard M-TIP — to Letters of Approval for live deployment.</li>
+              <li>Implemented DUKPT key management, ISO 9564 PIN encryption and P2PE: plaintext card data never touches the OS.</li>
+              <li>Designed ISO 8583 messaging with offline store-and-forward; run production RCA on the live merchant network.</li>
+            </ul>
+          </div>
+
+          <div class="job dim">
+            <div class="when">2020 — DEC 2023</div>
+            <h3>Senior Flutter Developer</h3>
+            <div class="co">Innovative Solutions — UAE &amp; Pakistan delivery</div>
+            <ul>
+              <li>Led the Labaiik super-app (UAE food, grocery &amp; medicine delivery) from first commit to both stores — customer and rider apps, live tracking, multi-method payments.</li>
+              <li>Delivered features across Bolt, Breadfast and WikiSleep; migrated legacy Android codebases to modular Flutter.</li>
+            </ul>
+          </div>
+
+          <div class="job dim" style="padding-bottom:4px">
+            <div class="when">2017 — 2019</div>
+            <h3>Android Engineer</h3>
+            <div class="co">Paki Network</div>
+            <ul>
+              <li>Native Android in Java/Kotlin — secure API communication, encrypted persistence, crash &amp; ANR forensics.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Education</div>
+            <div style="font-family:var(--disp);font-size:14px;font-weight:600;margin-top:6px">B.Sc. Software Engineering</div>
+            <div class="sub" style="font-size:12px">MAJU, Karachi — 2015–2019</div>
+          </div>
+        </section>
+
+        <!-- ============ POS (injected separately) ============ -->
+
+        <!-- ============ PROJECTS ============ -->
+        <section class="scr" id="scr-projects">
+          <div class="eyebrow">Selected Work</div>
+          <h2 class="screen-title">Projects</h2>
+
+          <div class="card" style="border-color:rgba(217,164,65,.4);background:var(--chip-soft)">
+            <div class="eyebrow" style="font-size:9px">Interactive · Android POS Terminal</div>
+            <div style="font-family:var(--disp);font-size:16px;font-weight:700;margin-top:6px">NextGen POS</div>
+            <p class="sub" style="font-size:12px;margin-top:5px">A production-style payment terminal: EMV chip / NFC / magstripe, DUKPT PIN security, ISO 8583 host messaging, settlement &amp; void. Architecture is public on my GitHub — and a working demo of the exact sale flow runs right here.</p>
+            <div class="chipline" style="margin-top:10px">
+              <span class="tag">Kotlin</span><span class="tag">EMV L2</span><span class="tag">ISO 8583</span><span class="tag">DUKPT</span>
+            </div>
+            <button class="cta" style="margin-top:14px" onclick="launchPOS()">
+              <span>Start POS demo</span><span style="font-size:18px">→</span>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Fintech · 5M+ users</div>
+            <div style="font-family:var(--disp);font-size:15px;font-weight:700;margin-top:6px">Keenu Wallet</div>
+            <p class="sub" style="font-size:12px;margin-top:5px">SBP-regulated EMI digital wallet on Android, iOS &amp; Huawei — IBFT from 10+ banks, card top-ups, bill pay, P2P, and full KYC with CNIC OCR and biometric verification. PCI-compliant end to end.</p>
+            <div class="chipline" style="margin-top:10px">
+              <span class="tag">Flutter</span><span class="tag">BLoC</span><span class="tag">Platform Channels</span><span class="tag">PCI</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Super-app · UAE · Both stores</div>
+            <div style="font-family:var(--disp);font-size:15px;font-weight:700;margin-top:6px">Labaiik — Customer &amp; Rider</div>
+            <p class="sub" style="font-size:12px;margin-top:5px">On-demand food, grocery &amp; medicine delivery built from first commit — live order tracking, multi-method payments, and a rider app with GPS broadcasting and battery-optimized geofencing.</p>
+            <div class="chipline" style="margin-top:10px">
+              <span class="tag">Flutter</span><span class="tag">Maps · GPS</span><span class="tag">Payments</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Client contributions</div>
+            <div style="font-family:var(--disp);font-size:15px;font-weight:700;margin-top:6px">Bolt · Breadfast · WikiSleep</div>
+            <p class="sub" style="font-size:12px;margin-top:5px">Feature development and cross-platform release support across ride-hailing, grocery delivery, and wellness — plus legacy Android → modular Flutter migrations.</p>
+            <div class="chipline" style="margin-top:10px">
+              <span class="tag">Flutter</span><span class="tag">Android</span><span class="tag">Offline-first</span>
+            </div>
+          </div>
+
+          <a class="contact-row" href="https://github.com/shummasniazi" target="_blank" rel="noopener">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></div>
+            <div><div class="t">More on GitHub</div><div class="s">github.com/shummasniazi</div></div>
+          </a>
+        </section>
+
+        <!-- ============ SKILLS ============ -->
+        <section class="scr" id="scr-skills">
+          <div class="eyebrow">Capabilities</div>
+          <h2 class="screen-title">Skills</h2>
+
+          <div class="skillgroup">
+            <h4>Payments &amp; Fintech</h4>
+            <div class="sub" style="font-size:12px">EMV L2/L3 · ISO 8583 · DUKPT (ANSI X9.24) · PIN security (ISO 9564) · P2PE / E2EE · SoftPOS (CPoC/MPoC) · PCI DSS &amp; PTS · scheme certification (ADVT / M-TIP / SAVVI / FIME) · store-and-forward · settlement &amp; reconciliation</div>
+            <div class="bar"><i style="width:96%"></i></div>
+          </div>
+          <div class="skillgroup">
+            <h4>Flutter / Dart</h4>
+            <div class="sub" style="font-size:12px">Clean Architecture · BLoC / GetX / Provider · multi-package modularization · isolates · Platform Channels &amp; custom plugins · CI/CD (Codemagic, GitHub Actions)</div>
+            <div class="bar"><i style="width:94%"></i></div>
+          </div>
+          <div class="skillgroup">
+            <h4>Native Android</h4>
+            <div class="sub" style="font-size:12px">Kotlin · Jetpack Compose · Coroutines &amp; Flow · Hilt/Dagger · NFC &amp; POS hardware (Sunmi, Topwise) · secure keystore · OEM SDKs</div>
+            <div class="bar"><i style="width:88%"></i></div>
+          </div>
+          <div class="skillgroup">
+            <h4>Quality &amp; Operations</h4>
+            <div class="sub" style="font-size:12px">Unit / widget / integration testing · performance profiling · production RCA on live financial infrastructure · crash &amp; ANR analysis</div>
+            <div class="bar"><i style="width:90%"></i></div>
+          </div>
+
+          <div class="card">
+            <div class="eyebrow" style="font-size:9px">Open source &amp; docs</div>
+            <p class="sub" style="font-size:12px;margin-top:6px">NextGen POS — public architecture documentation of a production-style Android payment terminal: sale orchestration, ISO 8583 packet building, OEM card-search flavors, embedded SDK design.</p>
+            <a class="contact-row" style="margin-top:10px" href="https://github.com/shummasniazi/fintech" target="_blank" rel="noopener">
+              <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></div>
+              <div><div class="t">github.com/shummasniazi/fintech</div><div class="s">architecture · ISO 8583 · sale flow</div></div>
+            </a>
+          </div>
+        </section>
+
+        <!-- ============ CONTACT ============ -->
+        <section class="scr" id="scr-contact">
+          <div class="eyebrow">Get in touch</div>
+          <h2 class="screen-title">Contact</h2>
+          <p class="sub">Mobile &amp; fintech engineer, 8+ years — open to payments and mobile engineering roles, remote, worldwide. Contractor-ready via Deel / Remote.com, based in Karachi (GMT+5, strong EMEA overlap).</p>
+
+          <a class="contact-row" href="mailto:niyazishummas@gmail.com">
+            <div class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6L22 7"/></svg></div>
+            <div><div class="t">Email</div><div class="s">niyazishummas@gmail.com</div></div>
+          </a>
+          <a class="contact-row" href="tel:+923366838623">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></div>
+            <div><div class="t">Phone / WhatsApp</div><div class="s">+92 336 683 8623</div></div>
+          </a>
+          <a class="contact-row" href="https://linkedin.com/in/shummas-niazi-454092128" target="_blank" rel="noopener">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4V8h4v1.5A6 6 0 0 1 16 8z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></div>
+            <div><div class="t">LinkedIn</div><div class="s">linkedin.com/in/shummas-niazi-454092128</div></div>
+          </a>
+          <a class="contact-row" href="https://github.com/shummasniazi" target="_blank" rel="noopener">
+            <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></div>
+            <div><div class="t">GitHub</div><div class="s">github.com/shummasniazi</div></div>
+          </a>
+
+          <div class="card" style="text-align:center">
+            <div class="mono" style="font-size:10px;color:var(--muted);letter-spacing:.12em">RESPONSE TIME</div>
+            <div style="font-family:var(--disp);font-weight:700;font-size:18px;color:var(--approve);margin-top:5px">&lt; 24 hours</div>
+            <div class="sub" style="font-size:11px;margin-top:3px">like any good acquirer host</div>
+          </div>
+        </section>
+
+        <!-- ============ POS TERMINAL APP ============ -->
+        <div class="pos" id="pos">
+          <div class="pos-head">
+            <span style="display:flex;align-items:center;gap:8px"><button onclick="exitPOS()" style="background:var(--surface);border:1px solid var(--line);color:var(--txt);border-radius:7px;font-family:var(--mono);font-size:9px;padding:4px 8px;cursor:pointer">✕ EXIT</button> NEXTGEN POS · TID 21043307</span>
+            <span class="live">● HOST ONLINE</span>
+          </div>
+          <div class="pos-stage" id="posStage">
+
+            <!-- boot -->
+            <div class="pstep on" id="p-boot">
+              <div class="boot">
+                <div class="logo">NextGen<b>POS</b></div>
+                <div class="bootlines" id="bootlines"></div>
+              </div>
+            </div>
+
+            <!-- dashboard -->
+            <div class="pstep" id="p-dash">
+              <div class="pos-title">Merchant Dashboard</div>
+              <div class="pos-sub">DEMO MART · MID 000000021043307</div>
+              <div class="dash">
+                <button class="primary" onclick="posGo('amount')"><b>SALE</b><span>CHIP · TAP · SWIPE</span></button>
+                <button onclick="openSettle()">SETTLEMENT<span>BATCH CLOSE 0500</span></button>
+                <button onclick="toast('Echo 0800 → 0810 · host RTT 184 ms')">ECHO TEST<span>0800 NETWORK MGMT</span></button>
+                <button onclick="openVoid()">VOID<span>REVERSAL 0400</span></button>
+                <button onclick="openReports()">REPORTS<span>X TOTALS</span></button>
+              </div>
+              <div class="card" style="margin-top:auto">
+                <div class="sub" style="font-size:11px;line-height:1.6">This terminal mirrors the real sale flow I build in production — the same screens documented in my public <span class="mono" style="color:var(--chip)">fintech</span> repo: amount → card → PIN → host → receipt.</div>
+              </div>
+            </div>
+
+            <!-- amount -->
+            <div class="pstep" id="p-amount">
+              <div class="pos-title">Sale</div>
+              <div class="amount-display"><span class="cur">PKR</span><span id="amt">0.00</span></div>
+              <div class="amount-hint">cert-lab easter egg: try <b>51.00</b> or <b>5.00</b></div>
+              <div class="keypad">
+                <button onclick="key('1')">1</button><button onclick="key('2')">2</button><button onclick="key('3')">3</button>
+                <button onclick="key('4')">4</button><button onclick="key('5')">5</button><button onclick="key('6')">6</button>
+                <button onclick="key('7')">7</button><button onclick="key('8')">8</button><button onclick="key('9')">9</button>
+                <button class="k-x" onclick="keyClear()">CLEAR</button><button onclick="key('0')">0</button><button class="k-ok" onclick="amountOK()">ENTER</button>
+              </div>
+            </div>
+
+            <!-- present card -->
+            <div class="pstep" id="p-card">
+              <div class="pos-title">Present card</div>
+              <div class="pos-sub">Amount: PKR <span id="amt2">0.00</span></div>
+              <div class="cardwait">
+                <div class="nfc-rings"><span class="r"></span><span class="r"></span><span class="r"></span><div class="cardicon"></div></div>
+                <div class="mono" style="font-size:10.5px;color:var(--muted)">ISO 14443 polling… field active</div>
+              </div>
+              <div class="present-actions">
+                <button onclick="present('tap')">TAP<em>NFC · ISO 14443</em></button>
+                <button onclick="present('insert')">INSERT<em>CHIP · ISO 7816</em></button>
+                <button onclick="present('swipe')">SWIPE<em>MSR FALLBACK</em></button>
+              </div>
+            </div>
+
+            <!-- pin -->
+            <div class="pstep" id="p-pin">
+              <div class="pos-title">Enter PIN</div>
+              <div class="pos-sub">VISA DEBIT •• 4242</div>
+              <div class="pindots" id="pindots"><i></i><i></i><i></i><i></i></div>
+              <div class="secure-note"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>encrypted on entry — DUKPT · ISO 9564 format 0</div>
+              <div class="keypad" style="margin-top:auto">
+                <button onclick="pin(1)">1</button><button onclick="pin(2)">2</button><button onclick="pin(3)">3</button>
+                <button onclick="pin(4)">4</button><button onclick="pin(5)">5</button><button onclick="pin(6)">6</button>
+                <button onclick="pin(7)">7</button><button onclick="pin(8)">8</button><button onclick="pin(9)">9</button>
+                <button class="k-x" onclick="pinClear()">CLEAR</button><button onclick="pin(0)">0</button><button class="k-ok" onclick="pinOK()">OK</button>
+              </div>
+            </div>
+
+            <!-- processing -->
+            <div class="pstep" id="p-proc">
+              <div class="pos-title"><span class="spinner"></span>Processing</div>
+              <div class="pos-sub">building 0200 → acquirer host</div>
+              <div class="trace" id="trace"></div>
+            </div>
+
+            <!-- result -->
+            <div class="pstep" id="p-result">
+              <div class="result-ic ok" id="resIc"><svg viewBox="0 0 24 24" id="resSvg"><path d="M4 12.5 9.5 18 20 6.5"/></svg></div>
+              <div class="pos-title" id="resTitle">APPROVED</div>
+              <div class="rc-code" id="resCode">RC 00 · AUTH 731942</div>
+              <div class="pos-actions">
+                <button onclick="posGo('dash')">DASHBOARD</button>
+                <button class="gold" onclick="newSale()">NEW SALE</button>
+              </div>
+              <div class="receipt-wrap">
+                <div class="receipt" id="receipt"></div>
+              </div>
+            </div>
+
+            <!-- void: pick a transaction -->
+            <div class="pstep" id="p-void">
+              <div class="pos-title">Void Transaction</div>
+              <div class="pos-sub">select a transaction · reversal 0400</div>
+              <div id="voidList" style="flex:1;overflow-y:auto;margin-top:12px;scrollbar-width:none"></div>
+              <div class="pos-actions"><button onclick="posGo('dash')">BACK</button></div>
+            </div>
+
+            <!-- settlement -->
+            <div class="pstep" id="p-settle">
+              <div class="pos-title">Settlement</div>
+              <div class="pos-sub">current batch · BATCH <span id="batchNo">000001</span></div>
+              <div id="settleSummary" style="margin-top:12px"></div>
+              <div class="pos-actions" style="margin-top:auto">
+                <button onclick="posGo('dash')">BACK</button>
+                <button class="gold" onclick="closeBatch()">CLOSE BATCH</button>
+              </div>
+            </div>
+
+            <!-- reports -->
+            <div class="pstep" id="p-reports">
+              <div class="pos-title">X Report</div>
+              <div class="pos-sub">running totals · batch not closed</div>
+              <div id="reportBody" style="flex:1;overflow-y:auto;margin-top:12px;scrollbar-width:none"></div>
+              <div class="pos-actions"><button onclick="posGo('dash')">BACK</button></div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /app -->
+
+      <!-- bottom nav -->
+      <nav class="nav">
+        <button class="on" data-nav="home" onclick="nav('home')">
+          <svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>Home
+        </button>
+        <button data-nav="career" onclick="nav('career')">
+          <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>Career
+        </button>
+        <button class="pos-btn" data-nav="projects" onclick="nav('projects')">
+          <span class="ring"></span>
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Projects
+        </button>
+        <button data-nav="skills" onclick="nav('skills')">
+          <svg viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Skills
+        </button>
+        <button data-nav="contact" onclick="nav('contact')">
+          <svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l2-5.2a8.4 8.4 0 1 1 16-4.3z"/></svg>Contact
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- clock ---------- */
+function tick(){
+  const d=new Date();
+  document.getElementById('clock').textContent=
+    String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+tick();setInterval(tick,15000);
+
+/* ---------- navigation ---------- */
+let booted=false;
+function nav(name){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.nav===name));
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pos').classList.remove('active');
+  document.getElementById('phone').classList.remove('terminal');
+  document.getElementById('scr-'+name).classList.add('active');
+}
+function launchPOS(){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.nav==='projects'));
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pos').classList.add('active');
+  document.getElementById('phone').classList.add('terminal');
+  if(!booted){boot();booted=true;}
+}
+function exitPOS(){nav('projects');}
+function goPOS(){launchPOS();}
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function toast(msg){
+  document.querySelectorAll('.toastmsg').forEach(t=>t.remove());
+  clearTimeout(toastTimer);
+  const t=document.createElement('div');
+  t.className='toastmsg';t.textContent=msg;
+  document.querySelector('.screen').appendChild(t);
+  toastTimer=setTimeout(()=>t.remove(),2400);
+}
+
+/* ---------- POS state machine ---------- */
+const steps=['boot','dash','amount','card','pin','proc','result','void','settle','reports'];
+function posGo(step){
+  steps.forEach(s=>document.getElementById('p-'+s).classList.toggle('on',s===step));
+}
+
+/* boot sequence */
+function boot(){
+  const lines=['loading EMV L2 kernel … OK','injecting IPEK · KSN FFFF9876543210E00000 … OK','sign-on 0800 → host … 0810 RC 00'];
+  const el=document.getElementById('bootlines');
+  el.innerHTML='';
+  lines.forEach((l,i)=>setTimeout(()=>{el.innerHTML+=l+'<br>';},350+i*420));
+  setTimeout(()=>posGo('dash'),350+lines.length*420+450);
+}
+
+/* amount entry — cents-style input */
+let cents=0;
+function fmt(c){return (c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function renderAmt(){document.getElementById('amt').textContent=fmt(cents);}
+function key(d){ if(cents<999999999){cents=cents*10+Number(d);renderAmt();} }
+function keyClear(){cents=0;renderAmt();}
+function amountOK(){
+  if(cents===0){toast('Enter an amount first');return;}
+  document.getElementById('amt2').textContent=fmt(cents);
+  posGo('card');
+}
+
+/* card presentation */
+let mode='tap';
+function present(m){
+  mode=m;
+  if(m==='insert'){posGo('pin');pinClear();}
+  else startProc();   /* tap & swipe: no online PIN in this demo */
+}
+
+/* pin */
+let pinCount=0;
+function renderPin(){
+  document.querySelectorAll('#pindots i').forEach((d,i)=>d.classList.toggle('f',i<pinCount));
+}
+function pin(){ if(pinCount<4){pinCount++;renderPin();} }
+function pinClear(){pinCount=0;renderPin();}
+function pinOK(){
+  if(pinCount<4){toast('PIN must be 4 digits');return;}
+  startProc();
+}
+
+/* processing + ISO 8583 trace */
+let stan=Math.floor(Math.random()*900)+100;
+let ksnCtr=Math.floor(Math.random()*40000)+10000;
+function startProc(){
+  posGo('proc');
+  stan++;ksnCtr++;
+  const amt12=String(cents).padStart(12,'0');
+  const decline51=(cents%10000===5100);
+  const decline05=(cents===500);
+  const rc=decline51?'51':(decline05?'05':'00');
+  const rcTxt=decline51?'INSUFFICIENT FUNDS':(decline05?'DO NOT HONOR':'APPROVED');
+  const auth=String(Math.floor(Math.random()*900000)+100000);
+  const entry=mode==='tap'?'07 · contactless':(mode==='insert'?'05 · chip':'90 · magstripe');
+  const t=document.getElementById('trace');
+  t.innerHTML='';
+  const L=[
+    ['lbl','── card read ─────────────────'],
+    ['val','entry mode  <span class="hi">'+entry+'</span>'],
+    ['val','AID         A0000000031010 · VISA DEBIT'],
+    ['val','PAN         424242******4242'],
+    ['val','ARQC        <span class="hi">9F26: 4C0A8F2E61B7D310</span>'],
+    ['lbl','── security ──────────────────'],
+    ['val','KSN         FFFF9876543210E'+String(ksnCtr).padStart(5,'0')],
+    ['val','PIN block   DE-52 · DUKPT-derived PEK '+(mode==='insert'?'· encrypted':'· n/a (CVM: no CVM)')],
+    ['lbl','── 0200 financial request ────'],
+    ['val','DE-3  proc  000000  ·  DE-4  amt  '+amt12],
+    ['val','DE-11 STAN  '+String(stan).padStart(6,'0')+'  ·  DE-22  '+(mode==='tap'?'071':'051')],
+    ['val','DE-55 TLV   9F02 9F03 82 9F36 9F26 9F27 …'],
+    ['hi' ,'→ TX to host  ····························'],
+    ['hi' ,'← 0210 in 412 ms'],
+    ['lbl','── host response ─────────────'],
+    [rc==='00'?'ok':'no','DE-39  RC '+rc+' · '+rcTxt+(rc==='00'?'  ·  DE-38 auth '+auth:'')],
+  ];
+  L.forEach((row,i)=>{
+    setTimeout(()=>{
+      const div=document.createElement('div');
+      div.className='tl';
+      div.innerHTML='<span class="'+row[0]+'">'+row[1]+'</span>';
+      t.appendChild(div);t.scrollTop=t.scrollHeight;
+      if(i===L.length-1)setTimeout(()=>showResult(rc,rcTxt,auth),700);
+    },260*i+(i>11?280:0));
+  });
+}
+
+/* result + receipt */
+function showResult(rc,rcTxt,auth){
+  const ok=rc==='00';
+  if(ok){batch.push({stan:String(stan).padStart(6,'0'),cents:cents,entry:mode,auth:auth,time:new Date(),voided:false});}
+  const ic=document.getElementById('resIc');
+  ic.className='result-ic '+(ok?'ok':'no');
+  document.getElementById('resSvg').innerHTML=ok?'<path d="M4 12.5 9.5 18 20 6.5"/>':'<path d="M6 6l12 12M18 6 6 18"/>';
+  document.getElementById('resTitle').textContent=ok?'APPROVED':'DECLINED';
+  document.getElementById('resCode').textContent='RC '+rc+' · '+(ok?('AUTH '+auth):rcTxt);
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const entry=mode==='tap'?'CONTACTLESS':(mode==='insert'?'CHIP':'SWIPE');
+  document.getElementById('receipt').innerHTML=
+    '<div class="c b">DEMO MART</div>'+
+    '<div class="c">Shahrah-e-Faisal, Karachi</div>'+
+    '<div class="c">MID 000000021043307 · TID 21043307</div><hr>'+
+    '<div class="row"><span>'+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+'</span><span>'+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+'</span></div>'+
+    '<div class="row"><span>SALE · '+entry+'</span><span>STAN '+String(stan).padStart(6,'0')+'</span></div>'+
+    '<div class="row"><span>VISA DEBIT</span><span>424242******4242</span></div>'+
+    '<div class="row"><span>AID</span><span>A0000000031010</span></div><hr>'+
+    '<div class="row big"><span>TOTAL</span><span>PKR '+fmt(cents)+'</span></div><hr>'+
+    (ok
+      ?'<div class="c b" style="font-size:12px">APPROVED · RC 00</div><div class="c">AUTH CODE '+auth+'</div><div class="c">NO CARDHOLDER SIGNATURE REQUIRED</div>'
+      :'<div class="c b" style="font-size:12px">DECLINED · RC '+rc+'</div><div class="c">'+rcTxt+'</div>')+
+    '<hr><div class="c">DUKPT · P2PE · NO PAN STORED</div>'+
+    '<div class="c">built by shummas khan niazi</div>'+
+    '<div class="c b">** '+(ok?'THANK YOU':'PLEASE TRY ANOTHER CARD')+' **</div>';
+  posGo('result');
+  const r=document.getElementById('receipt');
+  r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
+}
+
+function newSale(){cents=0;renderAmt();posGo('amount');}
+
+/* ---------- batch storage ---------- */
+let batch=[];
+let batchNo=1;
+const entryName=m=>m==='tap'?'CONTACTLESS':(m==='insert'?'CHIP':'SWIPE');
+
+/* ---------- VOID ---------- */
+function openVoid(){
+  const el=document.getElementById('voidList');
+  const live=batch.filter(t=>!t.voided);
+  if(live.length===0){
+    el.innerHTML='<div class="card" style="text-align:center"><div class="mono" style="font-size:10px;color:var(--muted);letter-spacing:.1em">BATCH EMPTY</div><p class="sub" style="font-size:12px;margin-top:6px">No transactions to void yet. Run a sale and come back — voided sales drop out of settlement totals.</p></div>';
+  }else{
+    el.innerHTML=batch.map((t,i)=>{
+      if(t.voided){
+        return '<div class="card" style="opacity:.45;margin-top:10px"><div class="row mono" style="display:flex;justify-content:space-between;font-size:11px"><span>STAN '+t.stan+' · '+entryName(t.entry)+'</span><span style="text-decoration:line-through">PKR '+fmt(t.cents)+'</span></div><div class="mono" style="font-size:9px;color:var(--decline);margin-top:4px">VOIDED</div></div>';
+      }
+      return '<button class="card" style="width:100%;text-align:left;cursor:pointer;margin-top:10px;color:var(--txt)" onclick="voidTxn('+i+')"><div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px"><span>STAN '+t.stan+' · '+entryName(t.entry)+'</span><span style="color:var(--chip)">PKR '+fmt(t.cents)+'</span></div><div class="mono" style="font-size:9px;color:var(--muted);margin-top:4px">AUTH '+t.auth+' · tap to void</div></button>';
+    }).join('');
+  }
+  posGo('void');
+}
+function voidTxn(i){
+  const t=batch[i];
+  posGo('proc');
+  document.querySelector('#p-proc .pos-title').innerHTML='<span class="spinner"></span>Reversing';
+  document.querySelector('#p-proc .pos-sub').textContent='building 0400 → acquirer host';
+  const tr=document.getElementById('trace');
+  tr.innerHTML='';
+  const L=[
+    ['lbl','── 0400 reversal request ─────'],
+    ['val','DE-4  amt   '+String(t.cents).padStart(12,'0')],
+    ['val','DE-11 STAN  '+t.stan+'  ·  original auth '+t.auth],
+    ['val','DE-90 original data elements'],
+    ['hi' ,'→ TX to host  ····························'],
+    ['hi' ,'← 0410 in 388 ms'],
+    ['ok' ,'DE-39  RC 00 · REVERSAL ACCEPTED'],
+  ];
+  L.forEach((row,idx)=>{
+    setTimeout(()=>{
+      const div=document.createElement('div');div.className='tl';
+      div.innerHTML='<span class="'+row[0]+'">'+row[1]+'</span>';
+      tr.appendChild(div);tr.scrollTop=tr.scrollHeight;
+      if(idx===L.length-1)setTimeout(()=>{
+        t.voided=true;
+        resetProcHead();
+        showVoidResult(t);
+      },650);
+    },300*idx);
+  });
+}
+function resetProcHead(){
+  document.querySelector('#p-proc .pos-title').innerHTML='<span class="spinner"></span>Processing';
+  document.querySelector('#p-proc .pos-sub').textContent='building 0200 → acquirer host';
+}
+function showVoidResult(t){
+  const ic=document.getElementById('resIc');
+  ic.className='result-ic ok';
+  document.getElementById('resSvg').innerHTML='<path d="M4 12.5 9.5 18 20 6.5"/>';
+  document.getElementById('resTitle').textContent='VOIDED';
+  document.getElementById('resCode').textContent='RC 00 · reversal of STAN '+t.stan;
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  document.getElementById('receipt').innerHTML=
+    '<div class="c b">DEMO MART</div><div class="c">MID 000000021043307 · TID 21043307</div><hr>'+
+    '<div class="row"><span>'+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+'</span><span>'+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+'</span></div>'+
+    '<div class="row"><span class="b">VOID · '+entryName(t.entry)+'</span><span>STAN '+t.stan+'</span></div>'+
+    '<div class="row"><span>VISA DEBIT</span><span>424242******4242</span></div><hr>'+
+    '<div class="row big"><span>VOID</span><span>-PKR '+fmt(t.cents)+'</span></div><hr>'+
+    '<div class="c b" style="font-size:12px">REVERSAL ACCEPTED · RC 00</div>'+
+    '<div class="c">ORIGINAL AUTH '+t.auth+'</div>'+
+    '<hr><div class="c">built by shummas khan niazi</div><div class="c b">** VOID COPY **</div>';
+  posGo('result');
+  const r=document.getElementById('receipt');
+  r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
+}
+
+/* ---------- SETTLEMENT ---------- */
+function batchTotals(){
+  const sales=batch.filter(t=>!t.voided);
+  const voids=batch.filter(t=>t.voided);
+  const sum=a=>a.reduce((s,t)=>s+t.cents,0);
+  return {sc:sales.length,sa:sum(sales),vc:voids.length,va:sum(voids),net:sum(sales)};
+}
+function settleRow(l,r,hi){return '<div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11.5px;padding:7px 0;border-bottom:1px dashed var(--line)"><span style="color:var(--muted)">'+l+'</span><span style="color:'+(hi?'var(--chip)':'var(--txt)')+'">'+r+'</span></div>';}
+function openSettle(){
+  const t=batchTotals();
+  document.getElementById('batchNo').textContent=String(batchNo).padStart(6,'0');
+  document.getElementById('settleSummary').innerHTML=
+    '<div class="card" style="margin-top:0">'+
+    settleRow('SALES','×'+t.sc+' · PKR '+fmt(t.sa))+
+    settleRow('VOIDS','×'+t.vc+' · PKR '+fmt(t.va))+
+    settleRow('REFUNDS','×0 · PKR 0.00')+
+    settleRow('NET TO SETTLE','PKR '+fmt(t.net),true)+
+    '</div>'+
+    (batch.length===0?'<p class="sub" style="font-size:11px;margin-top:10px;text-align:center">Batch is empty — closing will upload zero totals, which the host accepts happily.</p>':'<p class="sub" style="font-size:11px;margin-top:10px;text-align:center">Closing reconciles terminal totals with the host (0500) and starts a new batch.</p>');
+  posGo('settle');
+}
+function closeBatch(){
+  const t=batchTotals();
+  posGo('proc');
+  document.querySelector('#p-proc .pos-title').innerHTML='<span class="spinner"></span>Settling';
+  document.querySelector('#p-proc .pos-sub').textContent='building 0500 → acquirer host';
+  const tr=document.getElementById('trace');tr.innerHTML='';
+  const L=[
+    ['lbl','── 0500 batch upload ─────────'],
+    ['val','batch       '+String(batchNo).padStart(6,'0')],
+    ['val','DE-74 credits ×0 · DE-76 voids ×'+t.vc],
+    ['val','DE-86 sales ×'+t.sc+' · PKR '+fmt(t.sa)],
+    ['val','net         PKR '+fmt(t.net)],
+    ['hi' ,'→ TX to host  ····························'],
+    ['hi' ,'← 0510 in 367 ms'],
+    ['ok' ,'DE-39  RC 00 · TOTALS MATCHED · BATCH CLOSED'],
+  ];
+  L.forEach((row,idx)=>{
+    setTimeout(()=>{
+      const div=document.createElement('div');div.className='tl';
+      div.innerHTML='<span class="'+row[0]+'">'+row[1]+'</span>';
+      tr.appendChild(div);tr.scrollTop=tr.scrollHeight;
+      if(idx===L.length-1)setTimeout(()=>{resetProcHead();showSettleResult(t);},650);
+    },300*idx);
+  });
+}
+function showSettleResult(t){
+  const ic=document.getElementById('resIc');
+  ic.className='result-ic ok';
+  document.getElementById('resSvg').innerHTML='<path d="M4 12.5 9.5 18 20 6.5"/>';
+  document.getElementById('resTitle').textContent='BATCH CLOSED';
+  document.getElementById('resCode').textContent='RC 00 · totals matched · batch '+String(batchNo).padStart(6,'0');
+  const d=new Date(),pad=n=>String(n).padStart(2,'0');
+  document.getElementById('receipt').innerHTML=
+    '<div class="c b">DEMO MART</div><div class="c">MID 000000021043307 · TID 21043307</div><hr>'+
+    '<div class="c b">SETTLEMENT REPORT</div>'+
+    '<div class="row"><span>'+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+'</span><span>'+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())+'</span></div>'+
+    '<div class="row"><span>BATCH</span><span>'+String(batchNo).padStart(6,'0')+'</span></div><hr>'+
+    '<div class="row"><span>SALES ×'+t.sc+'</span><span>PKR '+fmt(t.sa)+'</span></div>'+
+    '<div class="row"><span>VOIDS ×'+t.vc+'</span><span>PKR '+fmt(t.va)+'</span></div>'+
+    '<div class="row"><span>REFUNDS ×0</span><span>PKR 0.00</span></div><hr>'+
+    '<div class="row big"><span>NET</span><span>PKR '+fmt(t.net)+'</span></div><hr>'+
+    '<div class="c b" style="font-size:12px">TOTALS MATCHED · RC 00</div>'+
+    '<hr><div class="c">built by shummas khan niazi</div><div class="c b">** BATCH CLOSED **</div>';
+  batch=[];batchNo++;
+  posGo('result');
+  const r=document.getElementById('receipt');
+  r.classList.remove('show');void r.offsetWidth;r.classList.add('show');
+}
+
+/* ---------- REPORTS ---------- */
+function openReports(){
+  const t=batchTotals();
+  const by=m=>batch.filter(x=>!x.voided&&x.entry===m);
+  const sum=a=>a.reduce((s,x)=>s+x.cents,0);
+  const pad=n=>String(n).padStart(2,'0');
+  let body='<div class="card" style="margin-top:0">'+
+    settleRow('CONTACTLESS','×'+by('tap').length+' · PKR '+fmt(sum(by('tap'))))+
+    settleRow('CHIP','×'+by('insert').length+' · PKR '+fmt(sum(by('insert'))))+
+    settleRow('SWIPE','×'+by('swipe').length+' · PKR '+fmt(sum(by('swipe'))))+
+    settleRow('VOIDS','×'+t.vc+' · PKR '+fmt(t.va))+
+    settleRow('NET','PKR '+fmt(t.net),true)+
+    '</div>';
+  if(batch.length){
+    body+='<div class="card"><div class="eyebrow" style="font-size:9px">Journal</div>'+
+      batch.map(x=>'<div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;padding:6px 0;border-bottom:1px dashed var(--line);'+(x.voided?'opacity:.45':'')+'"><span>'+pad(x.time.getHours())+':'+pad(x.time.getMinutes())+' · '+x.stan+'</span><span'+(x.voided?' style="text-decoration:line-through"':'')+'>PKR '+fmt(x.cents)+'</span></div>').join('')+
+      '</div>';
+  }else{
+    body+='<p class="sub" style="font-size:11px;margin-top:12px;text-align:center">Journal is empty — approved sales will appear here in real time.</p>';
+  }
+  document.getElementById('reportBody').innerHTML=body;
+  posGo('reports');
+}
+</script>
+</body>
+</html>
